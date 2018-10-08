@@ -1,0 +1,84 @@
+{
+  "name": "user",
+  "version": "1.0.0-0",
+  "description": "user - IMQ based service",
+  "keywords": [],
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "mocha": "nyc mocha",
+    "show:test": "/usr/bin/env node -e \"require('opn')('file://`pwd`/coverage/index.html',{wait:false});\"",
+    "show:doc": "/usr/bin/env node -e \"require('opn')('file://`pwd`/docs/index.html',{wait:false});\"",
+    "test": "npm run build && npm run mocha && npm run show:test",
+    "clean:dts": "find . -name '*.d.ts' -not -wholename '*node_modules*' -type f -delete",
+    "clean:map": "find . -name '*.js.map' -not -wholename '*node_modules*' -type f -delete",
+    "clean:js": "find . -name '*.js' -not -wholename '*node_modules*' -type f -delete",
+    "clean:test": "rm -rf .nyc_output coverage",
+    "clean:doc": "rm -rf docs",
+    "clean": "npm run clean:test && npm run clean:dts && npm run clean:map && npm run clean:js && npm run clean:doc",
+    "doc": "npm run clean:doc && typedoc --excludePrivate --excludeExternals --hideGenerator --exclude \"**/+(debug|test|node_modules|docs|coverage|.nyc_output)/**/*\" --mode file --out ./docs . && npm run show:doc",
+    "start": "NODE_ENV=production /usr/bin/env node ./index.js",
+    "dev": "npm run build && NODE_ENV=development /usr/bin/env node ./index.js",
+    "docker:build": "docker build -f Dockerfile -t user .",
+    "docker:run": "docker run --rm -it --name user user",
+    "docker:stop": "docker stop user",
+    "docker:ssh": "docker exec -it user sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:/imqueue-sandbox/user"
+  },
+  "bugs": {
+    "url": "https://github.com/imqueue-sandbox/user/issues"
+  },
+  "homepage": "https://github.com/imqueue-sandbox/user",
+  "author": "Imqueue Sandbox <support@imqueue.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@imqueue/rpc": "^1.2.8",
+    "dotenv": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.6",
+    "@types/dotenv": "^4.0.3",
+    "@types/mocha": "^5.2.5",
+    "@types/mock-require": "^2.0.0",
+    "@types/node": "^10.11.4",
+    "@types/sinon": "^5.0.4",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "mocha-lcov-reporter": "^1.3.0",
+    "mock-require": "^3.0.2",
+    "nyc": "^13.0.1",
+    "opn": "^5.4.0",
+    "reflect-metadata": "^0.1.12",
+    "sinon": "^6.3.5",
+    "source-map-support": "^0.5.9",
+    "ts-node": "^7.0.1",
+    "typedoc": "^0.12.0",
+    "typescript": "^3.1.1"
+  },
+  "main": "index.js",
+  "typescript": {
+    "definitions": "index.d.ts"
+  },
+  "nyc": {
+    "check-coverage": true,
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "**/test/**"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "html",
+      "text",
+      "text-summary",
+      "lcovonly"
+    ]
+  }
+}

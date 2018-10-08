@@ -50,11 +50,24 @@ export class User extends IMQService {
             this.db.once('open', resolve);
             const schema = new mongoose.Schema({
                 id: mongoose.SchemaTypes.ObjectId,
-                email: mongoose.SchemaTypes.String,
-                password: mongoose.SchemaTypes.String,
+                email: {
+                    type: mongoose.SchemaTypes.String,
+                    unique: true,
+                    required: true,
+                },
+                password: {
+                    type: mongoose.SchemaTypes.String,
+                    required: true,
+                },
                 isActive: mongoose.SchemaTypes.Boolean,
-                firstName: mongoose.SchemaTypes.String,
-                lastName: mongoose.SchemaTypes.String,
+                firstName: {
+                    type: mongoose.SchemaTypes.String,
+                    required: true,
+                },
+                lastName: {
+                    type: mongoose.SchemaTypes.String,
+                    required: true,
+                }
             });
             this.UserModel = mongoose.model('User', schema);
         });
@@ -89,8 +102,16 @@ export class User extends IMQService {
         }
         // create
         else {
-            user = new this.UserModel(data);
-            await user.save();
+            try {
+                user = new this.UserModel(data);
+                await user.save();
+            } catch (err) {
+                if (/duplicate key/.test(err)) {
+                    throw new TypeError(
+                        'Duplicate e-mail, such user already exists'
+                    );
+                }
+            }
         }
 
         return user as UserObject;

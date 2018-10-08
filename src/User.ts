@@ -61,6 +61,7 @@ export class User extends IMQService {
      *
      * @return Promise<any>
      */
+    @profile()
     private async initDb(): Promise<any> {
         return new Promise((resolve, reject) => {
             mongoose.connect(
@@ -85,6 +86,7 @@ export class User extends IMQService {
     /**
      * Overriding start method to inject mongodb connection establishment
      */
+    @profile()
     public async start(): Promise<IMessageQueue | undefined> {
         this.logger.log('Initializing MongoDB connection...');
         await this.initDb();

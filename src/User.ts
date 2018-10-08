@@ -20,33 +20,10 @@ import {
     IMQService,
     expose,
     profile,
-    property,
     IMessageQueue,
 } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
-
-/**
- * Serializable user type
- */
-export class UserObject {
-    @property('string', true)
-    _id?: string;
-
-    @property('string')
-    email: string;
-
-    @property('string')
-    password: string;
-
-    @property('boolean')
-    isActive: boolean;
-
-    @property('string')
-    firstName: string;
-
-    @property('string')
-    lastName: string;
-}
+import { UserObject } from './types';
 
 /**
  * User service implementation

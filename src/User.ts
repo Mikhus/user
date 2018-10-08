@@ -140,6 +140,7 @@ export class User extends IMQService {
     }
 
     /**
+     * Deactivates user in the system
      *
      * @param {string} id - user identifier in the system
      * @return {Promise<boolean>} - operation execution result
@@ -157,4 +158,74 @@ export class User extends IMQService {
             return false;
         }
     }
+
+    /**
+     * Look-ups and returns user data by either user e-mail or by user object
+     * identifier
+     *
+     * @param {string} criteria - user identifier or e-mail string
+     * @return {Promise<UserObject | null>} - found user object or nothing
+     */
+    @profile()
+    @expose()
+    public async fetch(criteria: string): Promise<UserObject | null> {
+        if (criteria.match('@')) {
+            return await this.UserModel.findOne().where({
+                email: criteria
+            }).exec();
+        }
+
+        else {
+            return await this.UserModel.findById(criteria).exec();
+        }
+    }
+
+    /**
+     * Returns number of users stored in the system and matching given criteria
+     *
+     * @param {boolean} [isActive] - filter by is active criteria
+     * @return {Promise<number>} - number of user counted
+     */
+    @profile()
+    @expose()
+    public async count(isActive?: boolean): Promise<number> {
+        if (typeof isActive === 'undefined') {
+            return await this.UserModel.count({}).exec();
+        }
+        else {
+            return await this.UserModel.count({ isActive }).exec();
+        }
+    }
+
+    /**
+     * Returns collection of users matched is active criteria. Records
+     * can be fetched skipping given number of records and having max length
+     * of a given limit argument
+     *
+     * @param {boolean} [isActive] - is active criteria to filter user list
+     * @param {number} [skip] - record to start fetching from
+     * @param {number} [limit] - selected collection max length from a starting position
+     * @return {Promise<UserObject[]>} - collection of users found
+     */
+    @profile()
+    @expose()
+    public async find(
+        isActive?: boolean,
+        skip?: number,
+        limit?: number,
+    ): Promise<UserObject[]> {
+        const criteria = typeof isActive === 'undefined' ? {} : { isActive };
+        const query = this.UserModel.find(criteria);
+
+        if (skip) {
+            query.skip(skip);
+        }
+
+        if(limit) {
+            query.limit(limit);
+        }
+
+        return await query.exec() as UserObject[];
+    }
+
 }

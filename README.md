@@ -2,6 +2,10 @@
 
 User - IMQ based service for IMQ Tutorial
 
+## Requirements
+
+ - [MongoDB](https://www.mongodb.com/)
+
 ## Usage
 
 To start service in production mode, run:

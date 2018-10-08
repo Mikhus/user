@@ -1,6 +1,6 @@
-# user
+# User
 
-user - IMQ based service
+User - IMQ based service for IMQ Tutorial
 
 ## Usage
 

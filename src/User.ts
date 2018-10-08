@@ -30,7 +30,7 @@ import * as mongoose from 'mongoose';
  */
 export class UserObject {
     @property('string', true)
-    id?: string;
+    _id?: string;
 
     @property('string')
     email: string;
@@ -92,30 +92,28 @@ export class User extends IMQService {
     }
 
     /**
-     * Creates a new user instance in the system
+     * Creates or updates existing user with the new data set
      *
      * @param {UserObject} data - user data fields
      * @return {Promise<UserObject>} - saved user data object
      */
     @profile()
     @expose()
-    public async create(data: UserObject): Promise<UserObject> {
-        const user = new this.UserModel(data);
-        await user.save();
-        return user as UserObject;
-    }
+    public async update(data: UserObject): Promise<UserObject> {
+        let user;
 
-    /**
-     * Updates existing user with the new data set
-     *
-     * @param {string} id - user identifier in the system
-     * @param {UserObject} data - user data fields
-     * @return {Promise<UserObject>} - saved user data object
-     */
-    @profile()
-    @expose()
-    public async update(id: string, data: UserObject): Promise<UserObject> {
-        const user = await this.UserModel.findByIdAndUpdate(id, data).exec();
+        // update
+        if (data._id) {
+            const id = data._id;
+            delete data._id;
+            user = await this.UserModel.findByIdAndUpdate(id, data).exec();
+        }
+        // create
+        else {
+            user = new this.UserModel(data);
+            await user.save();
+        }
+
         return user as UserObject;
     }
 

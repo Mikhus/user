@@ -105,7 +105,8 @@ export class User extends IMQService {
             const id = data._id;
             delete data._id;
 
-            user = await this.UserModel.findByIdAndUpdate(id, data).exec();
+            await this.UserModel.findByIdAndUpdate(id, data).exec();
+            user = await this.fetch(id);
         }
         // create
         else {

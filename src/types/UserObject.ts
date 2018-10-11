@@ -51,6 +51,13 @@ export class UserObject {
     isActive: boolean;
 
     /**
+     * Admin role flag
+     * @type {boolean}
+     */
+    @property('boolean')
+    isAdmin: boolean;
+
+    /**
      * User's first name field
      * @type {string}
      */

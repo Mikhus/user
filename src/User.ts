@@ -60,6 +60,7 @@ export class User extends IMQService {
                     required: true,
                 },
                 isActive: mongoose.SchemaTypes.Boolean,
+                isAdmin: mongoose.SchemaTypes.Boolean,
                 firstName: {
                     type: mongoose.SchemaTypes.String,
                     required: true,
@@ -162,20 +163,30 @@ export class User extends IMQService {
      * identifier
      *
      * @param {string} criteria - user identifier or e-mail string
+     * @param {string[]} fields - fields to select and return
      * @return {Promise<UserObject | null>} - found user object or nothing
      */
     @profile()
     @expose()
-    public async fetch(criteria: string): Promise<UserObject | null> {
+    public async fetch(
+        criteria: string,
+        fields?: string[]
+    ): Promise<UserObject | null> {
+        let query: mongoose.Query;
+
         if (criteria.match('@')) {
-            return await this.UserModel.findOne().where({
+            query = this.UserModel.findOne().where({
                 email: criteria
-            }).exec();
+            });
+        } else {
+            query = this.UserModel.findById(criteria);
         }
 
-        else {
-            return await this.UserModel.findById(criteria).exec();
+        if (fields && fields.length) {
+            query.select(fields.join(' '));
         }
+
+        return await query.exec();
     }
 
     /**
@@ -201,6 +212,7 @@ export class User extends IMQService {
      * of a given limit argument
      *
      * @param {boolean} [isActive] - is active criteria to filter user list
+     * @param {string[]} [fields] - list of fields to be selected and returned for each found user object
      * @param {number} [skip] - record to start fetching from
      * @param {number} [limit] - selected collection max length from a starting position
      * @return {Promise<UserObject[]>} - collection of users found
@@ -209,21 +221,28 @@ export class User extends IMQService {
     @expose()
     public async find(
         isActive?: boolean,
+        fields?: string[],
         skip?: number,
         limit?: number,
     ): Promise<UserObject[]> {
-        const criteria = typeof isActive === 'undefined' ? {} : { isActive };
+        const criteria = typeof isActive !== 'boolean' ? {} : { isActive };
         const query = this.UserModel.find(criteria);
+
+        if (fields && fields.length) {
+            query.select(fields.join(' '));
+        }
 
         if (skip) {
             query.skip(skip);
         }
 
-        if(limit) {
+        if (limit) {
             query.limit(limit);
         }
 
-        return await query.exec() as UserObject[];
+        const users = await query.exec();
+
+        return users as UserObject[];
     }
 
 }

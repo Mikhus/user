@@ -131,46 +131,6 @@ export class User extends IMQService {
     }
 
     /**
-     * Activates user in the system
-     *
-     * @param {string} id - user identifier in the system
-     * @return {Promise<boolean>} - operation execution result
-     */
-    @profile()
-    @expose()
-    public async activate(id: string): Promise<boolean> {
-        try {
-            await this.UserModel
-                .findByIdAndUpdate(id, { isActive: true })
-                .exec();
-            return true;
-        } catch (err) {
-            this.logger.warn('Error when activating user:', err);
-            return false;
-        }
-    }
-
-    /**
-     * Deactivates user in the system
-     *
-     * @param {string} id - user identifier in the system
-     * @return {Promise<boolean>} - operation execution result
-     */
-    @profile()
-    @expose()
-    public async deactivate(id: string): Promise<boolean> {
-        try {
-            await this.UserModel
-                .findByIdAndUpdate(id, { isActive: false })
-                .exec();
-            return true;
-        } catch (err) {
-            this.logger.warn('Error when deactivating user:', err);
-            return false;
-        }
-    }
-
-    /**
      * Look-ups and returns user data by either user e-mail or by user object
      * identifier
      *

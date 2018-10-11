@@ -172,7 +172,7 @@ export class User extends IMQService {
         criteria: string,
         fields?: string[]
     ): Promise<UserObject | null> {
-        let query: mongoose.Query;
+        let query: mongoose.DocumentQuery<UserObject | null, any>;
 
         if (criteria.match('@')) {
             query = this.UserModel.findOne().where({

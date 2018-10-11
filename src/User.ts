@@ -23,6 +23,7 @@ import {
     IMessageQueue,
 } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
+import { md5 } from './helpers';
 import { UserObject } from './types';
 
 /**
@@ -95,10 +96,15 @@ export class User extends IMQService {
     public async update(data: UserObject): Promise<UserObject> {
         let user;
 
+        if (data.password) {
+            data.password = md5(data.password);
+        }
+
         // update
         if (data._id) {
             const id = data._id;
             delete data._id;
+
             user = await this.UserModel.findByIdAndUpdate(id, data).exec();
         }
         // create
@@ -163,7 +169,7 @@ export class User extends IMQService {
      * identifier
      *
      * @param {string} criteria - user identifier or e-mail string
-     * @param {string[]} fields - fields to select and return
+     * @param {string[]} [fields] - fields to select and return
      * @return {Promise<UserObject | null>} - found user object or nothing
      */
     @profile()

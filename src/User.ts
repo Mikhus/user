@@ -89,11 +89,15 @@ export class User extends IMQService {
      * Creates or updates existing user with the new data set
      *
      * @param {UserObject} data - user data fields
+     * @param {string[]} [fields] - fields to return on success
      * @return {Promise<UserObject>} - saved user data object
      */
     @profile()
     @expose()
-    public async update(data: UserObject): Promise<UserObject> {
+    public async update(
+        data: UserObject,
+        fields?: string[]
+    ): Promise<UserObject> {
         let user;
 
         if (data.password) {
@@ -102,27 +106,28 @@ export class User extends IMQService {
 
         // update
         if (data._id) {
-            const id = data._id;
+            const _id = data._id;
             delete data._id;
 
-            await this.UserModel.findByIdAndUpdate(id, data).exec();
-            user = await this.fetch(id);
+            await this.UserModel.update({ _id }, data).exec();
+            return await this.fetch(_id, fields) as UserObject;
         }
         // create
         else {
             try {
                 user = new this.UserModel(data);
                 await user.save();
+                return await this.fetch(data.email, fields) as UserObject;
             } catch (err) {
                 if (/duplicate key/.test(err)) {
                     throw new TypeError(
                         'Duplicate e-mail, such user already exists'
                     );
+                } else {
+                    throw err;
                 }
             }
         }
-
-        return user as UserObject;
     }
 
     /**

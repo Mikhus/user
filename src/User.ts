@@ -69,7 +69,7 @@ export class User extends IMQService {
                 lastName: {
                     type: mongoose.SchemaTypes.String,
                     required: true,
-                }
+                },
             });
             this.UserModel = mongoose.model('User', schema);
         });

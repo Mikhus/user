@@ -44,10 +44,13 @@ export class User extends IMQService {
     private async initDb(): Promise<any> {
         return new Promise((resolve, reject) => {
             mongoose.set('useCreateIndex', true);
-            mongoose.connect(USER_DB, { useNewUrlParser: true });
+            mongoose.set('useNewUrlParser', true);
+            mongoose.connect(USER_DB);
+
             this.db = mongoose.connection;
             this.db.on('error', reject);
             this.db.once('open', resolve);
+
             const schema = new mongoose.Schema({
                 id: mongoose.SchemaTypes.ObjectId,
                 email: {
@@ -70,6 +73,7 @@ export class User extends IMQService {
                     required: true,
                 },
             });
+
             this.UserModel = mongoose.model('User', schema);
         });
     }
@@ -81,6 +85,7 @@ export class User extends IMQService {
     public async start(): Promise<IMessageQueue | undefined> {
         this.logger.log('Initializing MongoDB connection...');
         await this.initDb();
+
         return super.start();
     }
 
@@ -106,9 +111,10 @@ export class User extends IMQService {
         // update
         if (data._id) {
             const _id = data._id;
-            delete data._id;
 
+            delete data._id;
             await this.UserModel.update({ _id }, data).exec();
+
             return await this.fetch(_id, fields) as UserObject;
         }
         // create
@@ -116,6 +122,7 @@ export class User extends IMQService {
             try {
                 user = new this.UserModel(data);
                 await user.save();
+
                 return await this.fetch(data.email, fields) as UserObject;
             } catch (err) {
                 if (/duplicate key/.test(err)) {

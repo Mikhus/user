@@ -26,3 +26,6 @@ initEnvironment();
 export const serviceOptions: Partial<IMQServiceOptions> = {
     safeDelivery: true
 };
+
+export const USER_DB: string = process.env['USER_DB'] ||
+    'mongodb://localhost/user';

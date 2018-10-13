@@ -25,6 +25,7 @@ import {
 import * as mongoose from 'mongoose';
 import { md5 } from './helpers';
 import { UserObject } from './types';
+import { USER_DB } from '../config';
 
 /**
  * User service implementation
@@ -42,10 +43,8 @@ export class User extends IMQService {
     @profile()
     private async initDb(): Promise<any> {
         return new Promise((resolve, reject) => {
-            mongoose.connect(
-                'mongodb://localhost/user',
-                { useNewUrlParser: true },
-            );
+            mongoose.set('useCreateIndex', true);
+            mongoose.connect(USER_DB, { useNewUrlParser: true });
             this.db = mongoose.connection;
             this.db.on('error', reject);
             this.db.once('open', resolve);
@@ -170,12 +169,9 @@ export class User extends IMQService {
     @profile()
     @expose()
     public async count(isActive?: boolean): Promise<number> {
-        if (typeof isActive === 'undefined') {
-            return await this.UserModel.count({}).exec();
-        }
-        else {
-            return await this.UserModel.count({ isActive }).exec();
-        }
+        const criteria = typeof isActive === 'boolean' ? { isActive } : {};
+
+        return await this.UserModel.count(criteria).exec();
     }
 
     /**
@@ -197,7 +193,7 @@ export class User extends IMQService {
         skip?: number,
         limit?: number,
     ): Promise<UserObject[]> {
-        const criteria = typeof isActive !== 'boolean' ? {} : { isActive };
+        const criteria = typeof isActive === 'boolean' ? { isActive } : {};
         const query = this.UserModel.find(criteria);
 
         if (fields && fields.length) {

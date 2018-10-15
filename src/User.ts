@@ -68,9 +68,13 @@ export class User extends IMQService {
                     required: true,
                 },
                 cars: {
-                    type: mongoose.SchemaTypes.Array,
+                    type: [{
+                        carId: mongoose.SchemaTypes.String,
+                        regNumber: mongoose.SchemaTypes.String,
+                    }],
                     required: false,
-                }
+                    default: [],
+                },
             });
 
             this.UserModel = mongoose.model('User', schema);
@@ -112,7 +116,7 @@ export class User extends IMQService {
             const _id = data._id;
 
             delete data._id;
-            await this.UserModel.update({ _id }, data).exec();
+            await this.UserModel.updateOne({ _id }, data).exec();
 
             return await this.fetch(_id, fields) as UserObject;
         }

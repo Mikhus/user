@@ -16,12 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-import {
-    IMQService,
-    expose,
-    profile,
-    IMessageQueue,
-} from '@imqueue/rpc';
+import { IMQService, expose, profile, IMessageQueue } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
 import { md5 } from './helpers';
 import { UserObject } from './types';
@@ -72,6 +67,10 @@ export class User extends IMQService {
                     type: mongoose.SchemaTypes.String,
                     required: true,
                 },
+                cars: {
+                    type: mongoose.SchemaTypes.Array,
+                    required: false,
+                }
             });
 
             this.UserModel = mongoose.model('User', schema);

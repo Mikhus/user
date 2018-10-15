@@ -16,5 +16,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-export * from './UserCarObject';
-export * from './UserObject';
+import { property } from '@imqueue/rpc';
+
+/**
+ * Serializable user type
+ */
+export class UserCarObject {
+
+    /**
+     * Car entity identifier
+     * @type {string}
+     */
+    @property('string')
+    carId: string;
+
+    /**
+     * Car registration number
+     * @type {string}
+     */
+    @property('string')
+    regNumber: string;
+}

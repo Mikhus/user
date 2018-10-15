@@ -17,6 +17,7 @@
  *
  */
 import { property } from '@imqueue/rpc';
+import { UserCarObject } from '.';
 
 /**
  * Serializable user type
@@ -73,7 +74,8 @@ export class UserObject {
 
     /**
      * User's cars identifiers list
+     * @type {UserCarObject[]}
      */
-    @property('string[]')
-    cars: string[];
+    @property('UserCarObject[]')
+    cars: UserCarObject[];
 }

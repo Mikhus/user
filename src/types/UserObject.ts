@@ -70,4 +70,10 @@ export class UserObject {
      */
     @property('string')
     lastName: string;
+
+    /**
+     * User's cars identifiers list
+     */
+    @property('string[]')
+    cars: string[];
 }

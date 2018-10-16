@@ -24,6 +24,13 @@ import { property } from '@imqueue/rpc';
 export class UserCarObject {
 
     /**
+     * UserCar object identifier
+     * @type {string}
+     */
+    @property('string')
+    _id: string;
+
+    /**
      * Car entity identifier
      * @type {string}
      */

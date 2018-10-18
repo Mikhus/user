@@ -57,8 +57,14 @@ export class User extends IMQService {
                     type: mongoose.SchemaTypes.String,
                     required: true,
                 },
-                isActive: mongoose.SchemaTypes.Boolean,
-                isAdmin: mongoose.SchemaTypes.Boolean,
+                isActive: {
+                    type: mongoose.SchemaTypes.Boolean,
+                    default: true,
+                },
+                isAdmin: {
+                    type: mongoose.SchemaTypes.Boolean,
+                    default: false,
+                },
                 firstName: {
                     type: mongoose.SchemaTypes.String,
                     required: true,

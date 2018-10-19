@@ -19,7 +19,7 @@
 import { IMQService, expose, profile, IMessageQueue } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
 import { md5 } from './helpers';
-import { UserObject } from './types';
+import { UserObject, UserFilters } from './types';
 import { USER_DB } from '../config';
 
 /**
@@ -29,6 +29,27 @@ export class User extends IMQService {
 
     private db: mongoose.Connection;
     private UserModel: mongoose.Model<any>;
+
+    /**
+     * Transforms given filters into mongo-specific filters object
+     *
+     * @param {UserFilters} filters
+     * @return {any}
+     */
+    private prepare(filters: UserFilters) {
+        for (let filter of Object.keys(filters)) {
+            if (~['isAdmin', 'isActive'].indexOf(filter)) {
+                continue;
+            }
+
+            (filters as any)[filter] = {
+                $regex: (filters as any)[filter],
+                $options: 'i'
+            };
+        }
+
+        return filters;
+    }
 
     /**
      * Initializes mongo database connection and user schema
@@ -179,15 +200,15 @@ export class User extends IMQService {
     /**
      * Returns number of users stored in the system and matching given criteria
      *
-     * @param {boolean} [isActive] - filter by is active criteria
+     * @param {UserFilters} [filters] - filter by is active criteria
      * @return {Promise<number>} - number of user counted
      */
     @profile()
     @expose()
-    public async count(isActive?: boolean): Promise<number> {
-        const criteria = typeof isActive === 'boolean' ? { isActive } : {};
-
-        return await this.UserModel.count(criteria).exec();
+    public async count(filters?: UserFilters): Promise<number> {
+        return await this.UserModel.count(
+            this.prepare(filters || {} as UserFilters)
+        ).exec();
     }
 
     /**
@@ -195,7 +216,7 @@ export class User extends IMQService {
      * can be fetched skipping given number of records and having max length
      * of a given limit argument
      *
-     * @param {boolean} [isActive] - is active criteria to filter user list
+     * @param {UserFilters} [filters] - is active criteria to filter user list
      * @param {string[]} [fields] - list of fields to be selected and returned for each found user object
      * @param {number} [skip] - record to start fetching from
      * @param {number} [limit] - selected collection max length from a starting position
@@ -204,13 +225,14 @@ export class User extends IMQService {
     @profile()
     @expose()
     public async find(
-        isActive?: boolean,
+        filters?: UserFilters,
         fields?: string[],
         skip?: number,
         limit?: number,
     ): Promise<UserObject[]> {
-        const criteria = typeof isActive === 'boolean' ? { isActive } : {};
-        const query = this.UserModel.find(criteria);
+        const query = this.UserModel.find(
+            this.prepare(filters || {} as UserFilters)
+        );
 
         if (fields && fields.length) {
             query.select(fields.join(' '));

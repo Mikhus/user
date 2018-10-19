@@ -16,65 +16,45 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 import { property } from '@imqueue/rpc';
-import { UserCarObject } from '.';
 
 /**
  * Serializable user type
  */
-export class UserObject {
-    /**
-     * User identifier
-     * @type {string}
-     */
-    @property('string', true)
-    _id?: string;
+export class UserFilters {
 
     /**
      * User e-mail address
      * @type {string}
      */
-    @property('string')
+    @property('string', true)
     email: string;
-
-    /**
-     * User password
-     * @type {string}
-     */
-    @property('string')
-    password: string;
 
     /**
      * Active/inactive user flag
      * @type {boolean}
      */
-    @property('boolean')
+    @property('boolean', true)
     isActive: boolean;
 
     /**
      * Admin role flag
      * @type {boolean}
      */
-    @property('boolean')
+    @property('boolean', true)
     isAdmin: boolean;
 
     /**
      * User's first name field
      * @type {string}
      */
-    @property('string')
-    firstName: string;
+    @property('string', true)
+    firstName?: string;
 
     /**
      * User's last name field
      * @type {string}
      */
-    @property('string')
-    lastName: string;
+    @property('string', true)
+    lastName?: string;
 
-    /**
-     * User's cars identifiers list
-     * @type {UserCarObject[]}
-     */
-    @property('UserCarObject[]')
-    cars: UserCarObject[];
 }

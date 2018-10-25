@@ -167,6 +167,33 @@ export class User extends IMQService {
     }
 
     /**
+     * Returns number of cars registered for the user having given id or email
+     *
+     * @param {string} idOrEmail
+     * @return {Promise<number>}
+     */
+    @profile()
+    @expose()
+    public async carsCount(idOrEmail: string): Promise<number> {
+        const field = /@/.test(idOrEmail) ? 'email' : '_id';
+        const ObjectId = mongoose.Types.ObjectId;
+
+        if (field === '_id') {
+            idOrEmail = ObjectId(idOrEmail) as any;
+        }
+
+        console.log(field, idOrEmail, await this.UserModel.aggregate([
+            { $match: { [field]: idOrEmail } },
+            { $project: { carsCount: { $size: "$cars" } } }
+        ]))
+
+        return ((await this.UserModel.aggregate([
+            { $match: { [field]: idOrEmail } },
+            { $project: { carsCount: { $size: "$cars" } } }
+        ]))[0] || {}).carsCount || 0
+    }
+
+    /**
      * Look-ups and returns user data by either user e-mail or by user object
      * identifier
      *

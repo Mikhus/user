@@ -182,11 +182,6 @@ export class User extends IMQService {
             idOrEmail = ObjectId(idOrEmail) as any;
         }
 
-        console.log(field, idOrEmail, await this.UserModel.aggregate([
-            { $match: { [field]: idOrEmail } },
-            { $project: { carsCount: { $size: "$cars" } } }
-        ]))
-
         return ((await this.UserModel.aggregate([
             { $match: { [field]: idOrEmail } },
             { $project: { carsCount: { $size: "$cars" } } }

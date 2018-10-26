@@ -14,13 +14,12 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
  */
 import { IMQService, expose, profile, IMessageQueue } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
-import { md5 } from './helpers';
+import { md5, isEmail } from './helpers';
 import { UserObject, UserFilters } from './types';
-import { USER_DB } from '../config';
+import { USER_DB, MAX_USER_CARS_COUNT } from '../config';
 
 /**
  * User service implementation
@@ -175,7 +174,7 @@ export class User extends IMQService {
     @profile()
     @expose()
     public async carsCount(idOrEmail: string): Promise<number> {
-        const field = /@/.test(idOrEmail) ? 'email' : '_id';
+        const field = isEmail(idOrEmail) ? 'email' : '_id';
         const ObjectId = mongoose.Types.ObjectId;
 
         if (field === '_id') {
@@ -204,9 +203,9 @@ export class User extends IMQService {
     ): Promise<UserObject | null> {
         let query: mongoose.DocumentQuery<UserObject | null, any>;
 
-        if (criteria.match('@')) {
+        if (isEmail(criteria)) {
             query = this.UserModel.findOne().where({
-                email: criteria
+                email: criteria,
             });
         } else {
             query = this.UserModel.findById(criteria);
@@ -273,4 +272,78 @@ export class User extends IMQService {
         return users as UserObject[];
     }
 
+    /**
+     * Attach new car to a user
+     *
+     * @param {string} userId - user identifier to add car to
+     * @param {string} carId - selected car identifier
+     * @param {string} regNumber - car registration number
+     * @return {Promise<boolean>} - operation result
+     */
+    @profile()
+    @expose()
+    public async addCar(
+        userId: string,
+        carId: string,
+        regNumber: string,
+    ): Promise<boolean> {
+        const ObjectId = mongoose.Types.ObjectId;
+        const carsCount = await this.carsCount(userId);
+
+        if (carsCount >= MAX_USER_CARS_COUNT) {
+            throw new Error('Max number of cars exceeded!');
+        }
+
+        try {
+            const result = await this.UserModel.updateOne(
+                { _id: ObjectId(userId) },
+                { $push: { cars: { carId, regNumber } } },
+            ).exec();
+
+            if (result && result.ok && result.nModified === 1) {
+                return true;
+            }
+
+            else {
+                this.logger.warn(
+                    'Something wrong with adding car, result is:',
+                    result);
+
+                return false;
+            }
+        } catch (err) {
+            this.logger.error('Error adding car to user:', err);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Removes given car from a user
+     *
+     * @param {string} carId - user car identifier
+     * @return {Promise<boolean>} - operation result
+     */
+    @profile()
+    @expose()
+    public async removeCar(
+        carId: string,
+    ): Promise<boolean> {
+        const ObjectId = mongoose.Types.ObjectId;
+
+        try {
+            await this.UserModel.update(
+                { 'cars._id': ObjectId(carId) },
+                { $pull: { cars: { _id: ObjectId(carId) } } },
+            ).exec();
+        } catch (err) {
+            this.logger.error('Error removing car from user:', err);
+
+            return false;
+        }
+
+        return true;
+    }
 }

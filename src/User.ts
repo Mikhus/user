@@ -20,6 +20,7 @@ import * as mongoose from 'mongoose';
 import { md5, isEmail } from './helpers';
 import { UserObject, UserFilters } from './types';
 import { USER_DB, MAX_USER_CARS_COUNT } from '../config';
+import { schema } from './schema';
 
 /**
  * User service implementation
@@ -66,43 +67,6 @@ export class User extends IMQService {
             this.db.on('error', reject);
             this.db.once('open', resolve);
 
-            const schema = new mongoose.Schema({
-                id: mongoose.SchemaTypes.ObjectId,
-                email: {
-                    type: mongoose.SchemaTypes.String,
-                    unique: true,
-                    required: true,
-                },
-                password: {
-                    type: mongoose.SchemaTypes.String,
-                    required: true,
-                },
-                isActive: {
-                    type: mongoose.SchemaTypes.Boolean,
-                    default: true,
-                },
-                isAdmin: {
-                    type: mongoose.SchemaTypes.Boolean,
-                    default: false,
-                },
-                firstName: {
-                    type: mongoose.SchemaTypes.String,
-                    required: true,
-                },
-                lastName: {
-                    type: mongoose.SchemaTypes.String,
-                    required: true,
-                },
-                cars: {
-                    type: [{
-                        carId: mongoose.SchemaTypes.String,
-                        regNumber: mongoose.SchemaTypes.String,
-                    }],
-                    required: false,
-                    default: [],
-                },
-            });
-
             this.UserModel = mongoose.model('User', schema);
         });
     }
@@ -119,49 +83,70 @@ export class User extends IMQService {
     }
 
     /**
+     * Creates new user object in a database
+     *
+     * @param {UserObject} data
+     * @param {string[]} fields
+     * @return {UserObject}
+     */
+    @profile()
+    private async createUser(data: UserObject, fields?: string[]) {
+        try {
+            const user = new this.UserModel(data);
+            await user.save();
+
+            return this.fetch(data.email, fields);
+        } catch (err) {
+            if (/duplicate key/.test(err)) {
+                throw new TypeError(
+                    'Duplicate e-mail, such user already exists'
+                );
+            } else {
+                throw err;
+            }
+        }
+    }
+
+    /**
+     * Updates existing user object in a database
+     *
+     * @param {UserObject} data
+     * @param {string[]} fields
+     * @return {UserObject}
+     */
+    @profile()
+    private async updateUser(data: UserObject, fields?: string[]) {
+        const _id = String(data._id);
+
+        delete data._id;
+        await this.UserModel.updateOne({ _id }, data).exec();
+
+        return this.fetch(_id, fields);
+    }
+
+    /**
      * Creates or updates existing user with the new data set
      *
      * @param {UserObject} data - user data fields
      * @param {string[]} [fields] - fields to return on success
-     * @return {Promise<UserObject>} - saved user data object
+     * @return {Promise<UserObject | null>} - saved user data object
      */
     @profile()
     @expose()
     public async update(
         data: UserObject,
         fields?: string[]
-    ): Promise<UserObject> {
-        let user;
-
+    ): Promise<UserObject | null> {
         if (data.password) {
             data.password = md5(data.password);
         }
 
-        // update
         if (data._id) {
-            const _id = data._id;
-
-            delete data._id;
-            await this.UserModel.updateOne({ _id }, data).exec();
-
-            return await this.fetch(_id, fields) as UserObject;
+            return await this.updateUser(data, fields);
         }
-        // create
-        else {
-            try {
-                user = new this.UserModel(data);
-                await user.save();
 
-                return await this.fetch(data.email, fields) as UserObject;
-            } catch (err) {
-                if (/duplicate key/.test(err)) {
-                    throw new TypeError(
-                        'Duplicate e-mail, such user already exists'
-                    );
-                } else {
-                    throw err;
-                }
-            }
+        else {
+            return await this.createUser(data, fields);
         }
     }
 
@@ -267,9 +252,7 @@ export class User extends IMQService {
             query.limit(limit);
         }
 
-        const users = await query.exec();
-
-        return users as UserObject[];
+        return await query.exec() as UserObject[];
     }
 
     /**
@@ -300,20 +283,12 @@ export class User extends IMQService {
                 { $push: { cars: { carId, regNumber } } },
             ).exec();
 
-            if (result && result.ok && result.nModified === 1) {
-                return true;
-            }
-
-            else {
-                this.logger.warn(
-                    'Something wrong with adding car, result is:',
-                    result);
-
+            if (!(result && result.ok && result.nModified === 1)) {
+                this.logger.warn('Invalid add car, result is:', result);
                 return false;
             }
         } catch (err) {
             this.logger.error('Error adding car to user:', err);
-
             return false;
         }
 
@@ -340,7 +315,6 @@ export class User extends IMQService {
             ).exec();
         } catch (err) {
             this.logger.error('Error removing car from user:', err);
-
             return false;
         }
 

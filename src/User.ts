@@ -186,6 +186,7 @@ export class User extends IMQService {
         criteria: string,
         fields?: string[]
     ): Promise<UserObject | null> {
+        const ObjectId = mongoose.Types.ObjectId;
         let query: mongoose.DocumentQuery<UserObject | null, any>;
 
         if (isEmail(criteria)) {
@@ -193,7 +194,7 @@ export class User extends IMQService {
                 email: criteria,
             });
         } else {
-            query = this.UserModel.findById(criteria);
+            query = this.UserModel.findById(ObjectId(criteria));
         }
 
         if (fields && fields.length) {
@@ -261,6 +262,7 @@ export class User extends IMQService {
      * @param {string} userId - user identifier to add car to
      * @param {string} carId - selected car identifier
      * @param {string} regNumber - car registration number
+     * @param {string[]} [selectedFields] - fields to fetch for a modified user object
      * @return {Promise<boolean>} - operation result
      */
     @profile()
@@ -269,7 +271,8 @@ export class User extends IMQService {
         userId: string,
         carId: string,
         regNumber: string,
-    ): Promise<boolean> {
+        selectedFields?: string[],
+    ): Promise<UserObject | null> {
         const ObjectId = mongoose.Types.ObjectId;
         const carsCount = await this.carsCount(userId);
 
@@ -285,39 +288,52 @@ export class User extends IMQService {
 
             if (!(result && result.ok && result.nModified === 1)) {
                 this.logger.warn('Invalid add car, result is:', result);
-                return false;
+                return null;
             }
+
+            return await this.fetch(userId, selectedFields);
         } catch (err) {
             this.logger.error('Error adding car to user:', err);
-            return false;
         }
 
-        return true;
+        return null;
     }
 
     /**
      * Removes given car from a user
      *
      * @param {string} carId - user car identifier
-     * @return {Promise<boolean>} - operation result
+     * @param {string[]} [selectedFields] - fields to fetch for a modified user object
+     * @return {Promise<UserObject | null>} - modified user object
      */
     @profile()
     @expose()
     public async removeCar(
         carId: string,
-    ): Promise<boolean> {
+        selectedFields?: string[],
+    ): Promise<UserObject | null> {
         const ObjectId = mongoose.Types.ObjectId;
+        let user: UserObject;
 
         try {
+            user = await this.UserModel.findOne({
+                'cars._id': ObjectId(carId),
+            });
+
+            if (!user) {
+                throw new Error('Invalid carId given!');
+            }
+
             await this.UserModel.update(
                 { 'cars._id': ObjectId(carId) },
                 { $pull: { cars: { _id: ObjectId(carId) } } },
             ).exec();
+
+            return await this.fetch(String(user._id), selectedFields);
         } catch (err) {
             this.logger.error('Error removing car from user:', err);
-            return false;
         }
 
-        return true;
+        return null;
     }
 }

@@ -46,8 +46,14 @@ export const schema = new mongoose.Schema({
     },
     cars: {
         type: [{
-            carId: mongoose.SchemaTypes.String,
-            regNumber: mongoose.SchemaTypes.String,
+            carId: {
+                type: mongoose.SchemaTypes.String,
+                required: true,
+            },
+            regNumber: {
+                type: mongoose.SchemaTypes.String,
+                required: true,
+            },
         }],
         required: false,
         default: [],

@@ -29,4 +29,4 @@ export const serviceOptions: Partial<IMQServiceOptions> = {
 export const USER_DB: string = process.env['USER_DB'] ||
     'mongodb://localhost/user';
 
-export const MAX_USER_CARS_COUNT: number = 5;
+export const MAX_USER_CARS_COUNT: number = 6;

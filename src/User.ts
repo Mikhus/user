@@ -280,23 +280,28 @@ export class User extends IMQService {
             throw new Error('Max number of cars exceeded!');
         }
 
+        let result: any;
+
         try {
-            const result = await this.UserModel.updateOne(
-                { _id: ObjectId(userId) },
+            result = await this.UserModel.updateOne(
+                { _id: ObjectId(userId), 'cars.regNumber': { $ne: regNumber } },
                 { $push: { cars: { carId, regNumber } } },
             ).exec();
-
-            if (!(result && result.ok && result.nModified === 1)) {
-                this.logger.warn('Invalid add car, result is:', result);
-                return null;
-            }
-
-            return await this.fetch(userId, selectedFields);
         } catch (err) {
             this.logger.error('Error adding car to user:', err);
+            return null;
         }
 
-        return null;
+        if (result && result.ok && !result.nModified) {
+            throw new Error('Duplicate car regNumber, can not add car!');
+        }
+
+        if (!(result && result.ok && result.nModified === 1)) {
+            this.logger.warn('Add car result is invalid:', result);
+            return null;
+        }
+
+        return await this.fetch(userId, selectedFields);
     }
 
     /**

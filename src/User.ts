@@ -296,13 +296,13 @@ export class User extends IMQService {
             throw INTERNAL_ERROR;
         }
 
+        if (result && result.ok && !result.nModified) {
+            throw ADD_CAR_DUPLICATE_ERROR;
+        }
+
         if (!(result && result.ok && result.nModified === 1)) {
             this.logger.log('addCar() invalid result:', result);
             throw INTERNAL_ERROR;
-        }
-
-        if (result && result.ok && !result.nModified) {
-            throw ADD_CAR_DUPLICATE_ERROR;
         }
 
         return await this.fetch(userId, selectedFields);

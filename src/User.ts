@@ -293,7 +293,8 @@ export class User extends IMQService {
         }
 
         if (result && result.ok && !result.nModified) {
-            throw new Error('Duplicate car regNumber, can not add car!');
+            throw new Error('Car with a given registration number already ' +
+                'exists on this user!');
         }
 
         if (!(result && result.ok && result.nModified === 1)) {

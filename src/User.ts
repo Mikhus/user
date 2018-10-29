@@ -330,7 +330,7 @@ export class User extends IMQService {
                 throw INVALID_CAR_ID_ERROR;
             }
 
-            await this.UserModel.update(
+            await this.UserModel.updateOne(
                 { 'cars._id': mongoose.Types.ObjectId(carId) },
                 { $pull: { cars: { _id: mongoose.Types.ObjectId(carId) } } },
             ).exec();

@@ -294,7 +294,7 @@ export class User extends IMQService {
 
         if (result && result.ok && !result.nModified) {
             throw new Error('Car with a given registration number already ' +
-                'exists on this user!');
+                'exists!');
         }
 
         if (!(result && result.ok && result.nModified === 1)) {

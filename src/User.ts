@@ -21,6 +21,13 @@ import { md5, isEmail } from './helpers';
 import { UserObject, UserFilters } from './types';
 import { USER_DB, MAX_USER_CARS_COUNT } from '../config';
 import { schema } from './schema';
+import {
+    ADD_CAR_LIMIT_EXCEEDED_ERROR,
+    ADD_CAR_DUPLICATE_ERROR,
+    ADD_USER_DUPLICATE_ERROR,
+    INTERNAL_ERROR,
+    INVALID_CAR_ID_ERROR,
+} from './errors';
 
 /**
  * User service implementation
@@ -98,9 +105,7 @@ export class User extends IMQService {
             return this.fetch(data.email, fields);
         } catch (err) {
             if (/duplicate key/.test(err)) {
-                throw new TypeError(
-                    'Duplicate e-mail, such user already exists'
-                );
+                throw ADD_USER_DUPLICATE_ERROR;
             } else {
                 throw err;
             }
@@ -263,7 +268,7 @@ export class User extends IMQService {
      * @param {string} carId - selected car identifier
      * @param {string} regNumber - car registration number
      * @param {string[]} [selectedFields] - fields to fetch for a modified user object
-     * @return {Promise<boolean>} - operation result
+     * @return {Promise<UserObject | null>} - operation result
      */
     @profile()
     @expose()
@@ -278,7 +283,7 @@ export class User extends IMQService {
         let result: any;
 
         if (carsCount >= MAX_USER_CARS_COUNT) {
-            throw new Error('Max number of cars exceeded!');
+            throw ADD_CAR_LIMIT_EXCEEDED_ERROR;
         }
 
         try {
@@ -287,18 +292,17 @@ export class User extends IMQService {
                 { $push: { cars: { carId, regNumber } } },
             ).exec();
         } catch (err) {
-            this.logger.error('Error adding car to user:', err);
-            return null;
-        }
-
-        if (result && result.ok && !result.nModified) {
-            throw new Error('Car with the given registration number already ' +
-                'exists!');
+            this.logger.log('addCar() error:', err);
+            throw INTERNAL_ERROR;
         }
 
         if (!(result && result.ok && result.nModified === 1)) {
-            this.logger.warn('Add car result is invalid:', result);
-            return null;
+            this.logger.log('addCar() invalid result:', result);
+            throw INTERNAL_ERROR;
+        }
+
+        if (result && result.ok && !result.nModified) {
+            throw ADD_CAR_DUPLICATE_ERROR;
         }
 
         return await this.fetch(userId, selectedFields);
@@ -317,28 +321,24 @@ export class User extends IMQService {
         carId: string,
         selectedFields?: string[],
     ): Promise<UserObject | null> {
-        const ObjectId = mongoose.Types.ObjectId;
-        let user: UserObject;
-
         try {
-            user = await this.UserModel.findOne({
-                'cars._id': ObjectId(carId),
+            const user = await this.UserModel.findOne({
+                'cars._id': mongoose.Types.ObjectId(carId)
             });
 
             if (!user) {
-                throw new Error('Invalid carId given!');
+                throw INVALID_CAR_ID_ERROR;
             }
 
             await this.UserModel.update(
-                { 'cars._id': ObjectId(carId) },
-                { $pull: { cars: { _id: ObjectId(carId) } } },
+                { 'cars._id': mongoose.Types.ObjectId(carId) },
+                { $pull: { cars: { _id: mongoose.Types.ObjectId(carId) } } },
             ).exec();
 
             return await this.fetch(String(user._id), selectedFields);
         } catch (err) {
-            this.logger.error('Error removing car from user:', err);
+            this.logger.log('removeCar() error:', err);
+            throw INTERNAL_ERROR;
         }
-
-        return null;
     }
 }

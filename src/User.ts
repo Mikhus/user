@@ -275,12 +275,11 @@ export class User extends IMQService {
     ): Promise<UserObject | null> {
         const ObjectId = mongoose.Types.ObjectId;
         const carsCount = await this.carsCount(userId);
+        let result: any;
 
         if (carsCount >= MAX_USER_CARS_COUNT) {
             throw new Error('Max number of cars exceeded!');
         }
-
-        let result: any;
 
         try {
             result = await this.UserModel.updateOne(

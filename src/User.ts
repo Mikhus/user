@@ -347,7 +347,7 @@ export class User extends IMQService {
      *
      * @param {string} userId - user identifier
      * @param {string} carId - car identifier
-     * @return {Promise<Partial<UserCarObject> | null>}
+     * @return {Promise<UserCarObject | null>}
      */
     @profile()
     @expose()

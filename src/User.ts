@@ -18,7 +18,7 @@
 import { IMQService, expose, profile, IMessageQueue } from '@imqueue/rpc';
 import * as mongoose from 'mongoose';
 import { md5, isEmail } from './helpers';
-import { UserObject, UserFilters } from './types';
+import { UserObject, UserFilters, UserCarObject } from './types';
 import { USER_DB, MAX_USER_CARS_COUNT } from '../config';
 import { schema } from './schema';
 import {
@@ -340,5 +340,26 @@ export class User extends IMQService {
             this.logger.log('removeCar() error:', err);
             throw INTERNAL_ERROR;
         }
+    }
+
+    /**
+     * Returns car object of a given user, fetched by identifier
+     *
+     * @param {string} userId - user identifier
+     * @param {string} carId - car identifier
+     * @return {Promise<Partial<UserCarObject> | null>}
+     */
+    @profile()
+    @expose()
+    public async getCar(
+        userId: string,
+        carId: string,
+    ): Promise<Partial<UserCarObject> | null> {
+        return (await this.UserModel
+            .findOne({ _id: mongoose.Types.ObjectId(userId) })
+            .select(['cars._id', 'cars.carId', 'cars.regNumber'])
+            .exec() || { cars: [] })
+            .cars
+            .find((car: UserCarObject) => String(car._id) === carId) || null;
     }
 }

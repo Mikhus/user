@@ -354,7 +354,7 @@ export class User extends IMQService {
     public async getCar(
         userId: string,
         carId: string,
-    ): Promise<Partial<UserCarObject> | null> {
+    ): Promise<UserCarObject | null> {
         return (await this.UserModel
             .findOne({ _id: mongoose.Types.ObjectId(userId) })
             .select(['cars._id', 'cars.carId', 'cars.regNumber'])

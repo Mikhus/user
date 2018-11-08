@@ -15,15 +15,20 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-import { IMQServiceOptions } from '@imqueue/rpc';
+import {
+    IMQServiceOptions,
+    DEFAULT_IMQ_SERVICE_OPTIONS as opts,
+} from '@imqueue/rpc';
 import { config as initEnvironment } from 'dotenv';
 
 initEnvironment();
 
-/* check environments variables if required to bypass secrets */
-
 export const serviceOptions: Partial<IMQServiceOptions> = {
-    safeDelivery: true
+    cluster: (process.env['IMQ_REDIS'] || `${opts.host}:${opts.port}`)
+        .split(',').map((instance: string) => {
+            const [host, port] = instance.split(':');
+            return { host, port: Number(port) };
+        }),
 };
 
 export const USER_DB: string = process.env['USER_DB'] ||

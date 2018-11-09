@@ -18,7 +18,6 @@
 import * as mongoose from 'mongoose';
 
 export const schema = new mongoose.Schema({
-    id: mongoose.SchemaTypes.ObjectId,
     email: {
         type: mongoose.SchemaTypes.String,
         unique: true,
